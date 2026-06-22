@@ -1,0 +1,70 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 6.316262482168331,
+        "y": 0.5868473609129818
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 3.9349867314609077,
+        "y": 0.5868473609129815
+      },
+      "isLocked": false,
+      "linkedName": "Right Trench to Field"
+    },
+    {
+      "anchor": {
+        "x": 3.3403708987161194,
+        "y": 0.7032952924393738
+      },
+      "prevControl": {
+        "x": 3.3403708987161194,
+        "y": 0.45329529243937383
+      },
+      "nextControl": {
+        "x": 3.3403708987161194,
+        "y": 2.0777804384288663
+      },
+      "isLocked": false,
+      "linkedName": "Start Right Trench"
+    },
+    {
+      "anchor": {
+        "x": 2.150014265335235,
+        "y": 4.00265335235378
+      },
+      "prevControl": {
+        "x": 2.150014265335235,
+        "y": 2.1349992613729096
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": "First 8 Endpoint"
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 179.61052106899064
+  },
+  "reversed": false,
+  "folder": "Rookie Autos",
+  "idealStartingState": {
+    "velocity": 0,
+    "rotation": 180.0
+  },
+  "useDefaultConstraints": true
+}

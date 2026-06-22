@@ -1,0 +1,118 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 3.5926666666640203,
+        "y": 7.533255555555041
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 9.780388888886243,
+        "y": 7.864566666666152
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.8171469329458585,
+        "y": 4.1708559201183215
+      },
+      "prevControl": {
+        "x": 7.851719587368816,
+        "y": 4.418453843304585
+      },
+      "nextControl": {
+        "x": 7.752609811476967,
+        "y": 3.708662388530355
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 7.61012838801806,
+        "y": 7.237318116980178
+      },
+      "prevControl": {
+        "x": 7.7296814084614685,
+        "y": 4.502689562965664
+      },
+      "nextControl": {
+        "x": 7.595066814410457,
+        "y": 7.581833120473876
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.5926666666640203,
+        "y": 7.533255555555041
+      },
+      "prevControl": {
+        "x": 3.9197688557843717,
+        "y": 7.496887156945855
+      },
+      "nextControl": {
+        "x": 3.3116729103051115,
+        "y": 7.564497452668096
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.5926666666640203,
+        "y": 7.533255555555041
+      },
+      "prevControl": {
+        "x": 3.3407753744296538,
+        "y": 7.533670071967254
+      },
+      "nextControl": {
+        "x": 3.863950918548751,
+        "y": 7.532809125772638
+      },
+      "isLocked": false,
+      "linkedName": null
+    },
+    {
+      "anchor": {
+        "x": 3.5926666666640203,
+        "y": 7.533255555555041
+      },
+      "prevControl": {
+        "x": 3.8421107675329482,
+        "y": 7.5499181046305015
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 30.0,
+    "rotation": -178.61964592655553
+  },
+  "reversed": false,
+  "folder": "Rookie Autos",
+  "idealStartingState": {
+    "velocity": 30.0,
+    "rotation": 178.8065105760181
+  },
+  "useDefaultConstraints": true
+}

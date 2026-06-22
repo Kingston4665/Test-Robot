@@ -1,0 +1,54 @@
+{
+  "version": "2025.0",
+  "waypoints": [
+    {
+      "anchor": {
+        "x": 6.160998573466477,
+        "y": 0.5868473609129818
+      },
+      "prevControl": null,
+      "nextControl": {
+        "x": 5.640170603277966,
+        "y": 0.5868473609129817
+      },
+      "isLocked": false,
+      "linkedName": "Fuel To Right Trench (Middle) Endpoint"
+    },
+    {
+      "anchor": {
+        "x": 3.2498002853067045,
+        "y": 0.61
+      },
+      "prevControl": {
+        "x": 3.744298590563573,
+        "y": 0.6100000000000001
+      },
+      "nextControl": null,
+      "isLocked": false,
+      "linkedName": null
+    }
+  ],
+  "rotationTargets": [],
+  "constraintZones": [],
+  "pointTowardsZones": [],
+  "eventMarkers": [],
+  "globalConstraints": {
+    "maxVelocity": 3.0,
+    "maxAcceleration": 3.0,
+    "maxAngularVelocity": 540.0,
+    "maxAngularAcceleration": 720.0,
+    "nominalVoltage": 12.0,
+    "unlimited": false
+  },
+  "goalEndState": {
+    "velocity": 0,
+    "rotation": 180.0
+  },
+  "reversed": false,
+  "folder": "Trench",
+  "idealStartingState": {
+    "velocity": 1.0,
+    "rotation": 180.0
+  },
+  "useDefaultConstraints": true
+}
