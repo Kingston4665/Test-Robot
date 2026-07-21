@@ -32,43 +32,43 @@ import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 public class SwerveSubsystem extends SubsystemBase {
 
   // Sparkmaxes/motors for each swerve module
-  SparkMax frontLeftDrive = new SparkMax(SparkMaxIDs.FRONT_LEFT_DRIVE, MotorType.kBrushless);
-  SparkMax frontRightDrive = new SparkMax(SparkMaxIDs.FRONT_RIGHT_DRIVE, MotorType.kBrushless);
-  SparkMax backLeftDrive = new SparkMax(SparkMaxIDs.BACK_LEFT_DRIVE, MotorType.kBrushless);
-  SparkMax backRightDrive = new SparkMax(SparkMaxIDs.BACK_RIGHT_DRIVE, MotorType.kBrushless);
+  private final SparkMax frontLeftDrive = new SparkMax(SparkMaxIDs.FRONT_LEFT_DRIVE, MotorType.kBrushless);
+  private final SparkMax frontRightDrive = new SparkMax(SparkMaxIDs.FRONT_RIGHT_DRIVE, MotorType.kBrushless);
+  private final SparkMax backLeftDrive = new SparkMax(SparkMaxIDs.BACK_LEFT_DRIVE, MotorType.kBrushless);
+  private final SparkMax backRightDrive = new SparkMax(SparkMaxIDs.BACK_RIGHT_DRIVE, MotorType.kBrushless);
 
-  SparkMax frontLeftTurn = new SparkMax(SparkMaxIDs.FRONT_LEFT_TURN, MotorType.kBrushless);
-  SparkMax frontRightTurn = new SparkMax(SparkMaxIDs.FRONT_RIGHT_TURN, MotorType.kBrushless);
-  SparkMax backLeftTurn = new SparkMax(SparkMaxIDs.BACK_LEFT_TURN, MotorType.kBrushless);
-  SparkMax backRightTurn = new SparkMax(SparkMaxIDs.BACK_RIGHT_TURN, MotorType.kBrushless);
+  private final SparkMax frontLeftTurn = new SparkMax(SparkMaxIDs.FRONT_LEFT_TURN, MotorType.kBrushless);
+  private final SparkMax frontRightTurn = new SparkMax(SparkMaxIDs.FRONT_RIGHT_TURN, MotorType.kBrushless);
+  private final SparkMax backLeftTurn = new SparkMax(SparkMaxIDs.BACK_LEFT_TURN, MotorType.kBrushless);
+  private final SparkMax backRightTurn = new SparkMax(SparkMaxIDs.BACK_RIGHT_TURN, MotorType.kBrushless);
 
   // Gyroscope
-  PigeonIMU gyro = new PigeonIMU(18);
+  private final PigeonIMU gyro = new PigeonIMU(18);
 
   // Encoders
-  AnalogEncoder frontLeftEncoder = new AnalogEncoder(EncoderIDs.FRONT_LEFT_ENCODER);
-  AnalogEncoder frontRightEncoder = new AnalogEncoder(EncoderIDs.FRONT_RIGHT_ENCODER);
-  AnalogEncoder backLeftEncoder = new AnalogEncoder(EncoderIDs.BACK_LEFT_ENCODER);
-  AnalogEncoder backRightEncoder = new AnalogEncoder(EncoderIDs.BACK_RIGHT_ENCODER);
+  private final AnalogEncoder frontLeftEncoder = new AnalogEncoder(EncoderIDs.FRONT_LEFT_ENCODER);
+  private final AnalogEncoder frontRightEncoder = new AnalogEncoder(EncoderIDs.FRONT_RIGHT_ENCODER);
+  private final AnalogEncoder backLeftEncoder = new AnalogEncoder(EncoderIDs.BACK_LEFT_ENCODER);
+  private final AnalogEncoder backRightEncoder = new AnalogEncoder(EncoderIDs.BACK_RIGHT_ENCODER);
 
-  RelativeEncoder frontLeftDriveEncoder = frontLeftDrive.getEncoder();
-  RelativeEncoder frontRightDriveEncoder = frontRightDrive.getEncoder();
-  RelativeEncoder backLeftDriveEncoder = backLeftDrive.getEncoder();
-  RelativeEncoder backRightDriveEncoder = backRightDrive.getEncoder();
+  private final RelativeEncoder frontLeftDriveEncoder = frontLeftDrive.getEncoder();
+  private final RelativeEncoder frontRightDriveEncoder = frontRightDrive.getEncoder();
+  private final RelativeEncoder backLeftDriveEncoder = backLeftDrive.getEncoder();
+  private final RelativeEncoder backRightDriveEncoder = backRightDrive.getEncoder();
 
   // Swerve Modules
-  SwerveModule frontLeft = new SwerveModule(frontLeftDrive, frontLeftTurn, frontLeftEncoder,
+  private final SwerveModule frontLeft = new SwerveModule(frontLeftDrive, frontLeftTurn, frontLeftEncoder,
       frontLeftDriveEncoder, EncoderOffsets.FRONT_LEFT_ENCODER_OFFSET);
-  SwerveModule frontRight = new SwerveModule(frontRightDrive, frontRightTurn, frontRightEncoder,
+  private final SwerveModule frontRight = new SwerveModule(frontRightDrive, frontRightTurn, frontRightEncoder,
       frontRightDriveEncoder, EncoderOffsets.FRONT_RIGHT_ENCODER_OFFSET);
-  SwerveModule backLeft = new SwerveModule(backLeftDrive, backLeftTurn, backLeftEncoder,
+  private final SwerveModule backLeft = new SwerveModule(backLeftDrive, backLeftTurn, backLeftEncoder,
       backLeftDriveEncoder, EncoderOffsets.BACK_LEFT_ENCODER_OFFSET);
-  SwerveModule backRight = new SwerveModule(backRightDrive, backRightTurn, backRightEncoder,
+  private final SwerveModule backRight = new SwerveModule(backRightDrive, backRightTurn, backRightEncoder,
       backRightDriveEncoder, EncoderOffsets.BACK_RIGHT_ENCODER_OFFSET);
 
   // Kinematics & Odometry
-  SwerveDriveKinematics kinematics;
-  SwerveDriveOdometry odometry;
+  private final SwerveDriveKinematics kinematics;
+  private final SwerveDriveOdometry odometry;
 
   /** Creates a new SwerveSubsytem. */
   public SwerveSubsystem() {

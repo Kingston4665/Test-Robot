@@ -15,11 +15,11 @@ import frc.robot.utils.SpeedAnglePair;
 
 public class SwerveModule {
 
-  private SparkMax drive;
-  private SparkMax turn;
+  private final SparkMax drive;
+  private final SparkMax turn;
 
-  private AnalogEncoder encoder;
-  private RelativeEncoder driveEncoder;
+  private final AnalogEncoder encoder;
+  private final RelativeEncoder driveEncoder;
 
   private boolean optimized;
 
