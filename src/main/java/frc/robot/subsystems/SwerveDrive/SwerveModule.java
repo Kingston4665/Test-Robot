@@ -1,4 +1,4 @@
-package frc.robot.utils;
+package frc.robot.subsystems.SwerveDrive;
 
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
@@ -8,9 +8,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.RobotController;
-import frc.robot.Constants.SwerveConstants;;
+import frc.robot.Constants.SwerveConstants;
+import frc.robot.utils.AngleUtil;
+import frc.robot.utils.SpeedAnglePair;
+;
 
 public class SwerveModule {
 
@@ -18,7 +19,6 @@ public class SwerveModule {
   private SparkMax turn;
 
   private AnalogEncoder encoder;
-  private AnalogInput encoderAnalogInput;
   private RelativeEncoder driveEncoder;
 
   private boolean optimized;
@@ -33,12 +33,11 @@ public class SwerveModule {
    * @param steerEncoder steer encoder - not from spark max
    * @param angleOffset  module angle offset
    */
-  public SwerveModule(SparkMax drive, SparkMax turn, AnalogEncoder encoder, AnalogInput encoderAnalogInput,
+  public SwerveModule(SparkMax drive, SparkMax turn, AnalogEncoder encoder,
       RelativeEncoder driveEncoder, double encoderOffset) {
     this.drive = drive;
     this.turn = turn;
     this.encoder = encoder;
-    this.encoderAnalogInput = encoderAnalogInput;
     this.encoderOffset = encoderOffset;
     this.driveEncoder = driveEncoder;
   }
@@ -129,9 +128,8 @@ public class SwerveModule {
    * @return the swerve module angle
    */
   public double getAngle() {
-    double angle = (1.0 - encoderAnalogInput.getVoltage() / RobotController.getVoltage5V()) * 2.0 * Math.PI;
-
-    angle = Math.toDegrees(angle);
+    double angle = (1.0 - encoder.get()) * 360;
+		
     angle = AngleUtil.circleMod(angle - encoderOffset);
 
     return angle;

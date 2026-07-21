@@ -18,7 +18,6 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
-import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.EncoderIDs;
@@ -27,7 +26,6 @@ import frc.robot.Constants.SparkMaxIDs;
 import frc.robot.Constants.SwerveDriveConstants;
 import frc.robot.utils.AngleUtil;
 import frc.robot.utils.InputUtil;
-import frc.robot.utils.SwerveModule;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
@@ -53,11 +51,6 @@ public class SwerveSubsystem extends SubsystemBase {
   AnalogEncoder backLeftEncoder = new AnalogEncoder(EncoderIDs.BACK_LEFT_ENCODER);
   AnalogEncoder backRightEncoder = new AnalogEncoder(EncoderIDs.BACK_RIGHT_ENCODER);
 
-  AnalogInput frontLeftAnalogInput = new AnalogInput(EncoderIDs.FRONT_LEFT_ENCODER);
-  AnalogInput frontRightAnalogInput = new AnalogInput(EncoderIDs.FRONT_RIGHT_ENCODER);
-  AnalogInput backLeftAnalogInput = new AnalogInput(EncoderIDs.BACK_LEFT_ENCODER);
-  AnalogInput backRightAnalogInput = new AnalogInput(EncoderIDs.BACK_RIGHT_ENCODER);
-
   RelativeEncoder frontLeftDriveEncoder = frontLeftDrive.getEncoder();
   RelativeEncoder frontRightDriveEncoder = frontRightDrive.getEncoder();
   RelativeEncoder backLeftDriveEncoder = backLeftDrive.getEncoder();
@@ -65,13 +58,13 @@ public class SwerveSubsystem extends SubsystemBase {
 
   // Swerve Modules
   SwerveModule frontLeft = new SwerveModule(frontLeftDrive, frontLeftTurn, frontLeftEncoder,
-      frontLeftAnalogInput, frontLeftDriveEncoder, EncoderOffsets.FRONT_LEFT_ENCODER_OFFSET);
+      frontLeftDriveEncoder, EncoderOffsets.FRONT_LEFT_ENCODER_OFFSET);
   SwerveModule frontRight = new SwerveModule(frontRightDrive, frontRightTurn, frontRightEncoder,
-      frontRightAnalogInput, frontRightDriveEncoder, EncoderOffsets.FRONT_RIGHT_ENCODER_OFFSET);
+      frontRightDriveEncoder, EncoderOffsets.FRONT_RIGHT_ENCODER_OFFSET);
   SwerveModule backLeft = new SwerveModule(backLeftDrive, backLeftTurn, backLeftEncoder,
-      backLeftAnalogInput, backLeftDriveEncoder, EncoderOffsets.BACK_LEFT_ENCODER_OFFSET);
+      backLeftDriveEncoder, EncoderOffsets.BACK_LEFT_ENCODER_OFFSET);
   SwerveModule backRight = new SwerveModule(backRightDrive, backRightTurn, backRightEncoder,
-      backRightAnalogInput, backRightDriveEncoder, EncoderOffsets.BACK_RIGHT_ENCODER_OFFSET);
+      backRightDriveEncoder, EncoderOffsets.BACK_RIGHT_ENCODER_OFFSET);
 
   // Kinematics & Odometry
   SwerveDriveKinematics kinematics;
