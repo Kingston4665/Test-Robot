@@ -128,7 +128,8 @@ public class SwerveModule {
    * @return the swerve module angle
    */
   public double getAngle() {
-    double angle = (1.0 - encoder.get()) * 360;
+		// The working 2026 configuration does not invert the absolute encoder.
+    double angle = encoder.get() * 360;
 		
     angle = AngleUtil.circleMod(angle - encoderOffset);
 

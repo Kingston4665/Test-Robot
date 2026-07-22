@@ -4,10 +4,13 @@
 
 package frc.robot.subsystems.SwerveDrive;
 
-import com.ctre.phoenix.sensors.PigeonIMU;
+import com.ctre.phoenix6.hardware.Pigeon2;
+import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -23,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.EncoderIDs;
 import frc.robot.Constants.EncoderOffsets;
 import frc.robot.Constants.SparkMaxIDs;
+import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveDriveConstants;
 import frc.robot.utils.AngleUtil;
 import frc.robot.utils.InputUtil;
@@ -43,7 +47,7 @@ public class SwerveSubsystem extends SubsystemBase {
   private final SparkMax backRightTurn = new SparkMax(SparkMaxIDs.BACK_RIGHT_TURN, MotorType.kBrushless);
 
   // Gyroscope
-  private final PigeonIMU gyro = new PigeonIMU(18);
+  private final Pigeon2 gyro = new Pigeon2(18);
 
   // Encoders
   private final AnalogEncoder frontLeftEncoder = new AnalogEncoder(EncoderIDs.FRONT_LEFT_ENCODER);
@@ -73,18 +77,26 @@ public class SwerveSubsystem extends SubsystemBase {
   /** Creates a new SwerveSubsytem. */
   public SwerveSubsystem() {
 
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.LOW; // TODO LOWER THIS AT COMP, SLOWS COMPUTATION
+    // The working 2026 module configuration inverts every angle motor.
+    SparkMaxConfig turnMotorConfig = new SparkMaxConfig();
+    turnMotorConfig.inverted(true);
+    frontLeftTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    frontRightTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    backLeftTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    backRightTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH; // TODO LOWER THIS AT COMP, SLOWS COMPUTATION
 
     kinematics = new SwerveDriveKinematics(
-      new Translation2d(0.368, 0.368),
-      new Translation2d(0.368, -0.368),
-      new Translation2d(-0.368, 0.368),
-      new Translation2d(-0.368, -0.368)
+			new Translation2d(SwerveConstants.MODULE_OFFSET_FROM_CENTER, SwerveConstants.MODULE_OFFSET_FROM_CENTER),
+			new Translation2d(SwerveConstants.MODULE_OFFSET_FROM_CENTER, -SwerveConstants.MODULE_OFFSET_FROM_CENTER),
+			new Translation2d(-SwerveConstants.MODULE_OFFSET_FROM_CENTER, SwerveConstants.MODULE_OFFSET_FROM_CENTER),
+			new Translation2d(-SwerveConstants.MODULE_OFFSET_FROM_CENTER, -SwerveConstants.MODULE_OFFSET_FROM_CENTER)
 		);
 
-    gyro.setFusedHeading(0);
+    gyro.setYaw(0);
 
-    odometry = new SwerveDriveOdometry(kinematics, new Rotation2d(Math.toRadians(gyro.getFusedHeading())),
+    odometry = new SwerveDriveOdometry(kinematics, new Rotation2d(Math.toRadians(gyro.getYaw().getValueAsDouble())),
         modulePositions());
   }
 
@@ -109,14 +121,22 @@ public class SwerveSubsystem extends SubsystemBase {
 	// Method to drive the robot, given x and y translation values, a turn value, and whether the driver wants field-relative control or turbo mode
   public void drive(double y, double x, double turn, boolean field, boolean turbo) {
     // Deadbands all of the values to prevent drift
-    double dturn = InputUtil.deadband(turn);
     double speedMultiplier = SwerveDriveConstants.MAX_SPEED / (turbo ? 1 : 1.25); // Normal speed is 80%, turbo is 100%
+    double angularSpeedMultiplier = SwerveDriveConstants.MAX_ANGULAR_SPEED / (turbo ? 1 : 1.25);
+    double dturn = InputUtil.deadband(turn) * angularSpeedMultiplier;
     double forward = InputUtil.deadband(y) * speedMultiplier;
     double strafe = InputUtil.deadband(x) * speedMultiplier;
+
+    // Stop the drive and steering motors while all controls are centered. Without
+    // this guard, zero-speed kinematics commands every module to turn to 0 degrees.
+    if (forward == 0.0 && strafe == 0.0 && dturn == 0.0) {
+      stopMotors();
+      return;
+    }
 		
 		// Makes the robot control field relative
 		if (field == true) {
-    double gyroRads = Math.toRadians(-gyro.getFusedHeading());
+    double gyroRads = Math.toRadians(-gyro.getYaw().getValueAsDouble());
     double temp = forward * Math.cos(gyroRads) + strafe * Math.sin(gyroRads);
     strafe = -forward * Math.sin(gyroRads) + strafe * Math.cos(gyroRads);
     forward = temp;
@@ -187,6 +207,13 @@ public class SwerveSubsystem extends SubsystemBase {
     backRight.steerToAngle(0);
   }
 
+  public boolean wheelsAreZero() {
+    return AngleUtil.distance(frontLeft.getAngle(), 0) <= SwerveConstants.WHEEL_ZERO_TOLERANCE_DEGREES
+        && AngleUtil.distance(frontRight.getAngle(), 0) <= SwerveConstants.WHEEL_ZERO_TOLERANCE_DEGREES
+        && AngleUtil.distance(backLeft.getAngle(), 0) <= SwerveConstants.WHEEL_ZERO_TOLERANCE_DEGREES
+        && AngleUtil.distance(backRight.getAngle(), 0) <= SwerveConstants.WHEEL_ZERO_TOLERANCE_DEGREES;
+  }
+
 	public void antiPushWheels() {
     frontLeft.steerToAngle(45);
     frontRight.steerToAngle(315); // -45
@@ -202,11 +229,11 @@ public class SwerveSubsystem extends SubsystemBase {
   }
 
   public void zeroGyro() {
-    gyro.setFusedHeading(0);
+    gyro.setYaw(0);
   }
 
   public double getAngle() {
-    return (gyro.getFusedHeading());
+    return (gyro.getYaw().getValueAsDouble());
   }
 
   public SwerveDriveOdometry getOdometry() {
@@ -247,7 +274,7 @@ public class SwerveSubsystem extends SubsystemBase {
 
 	// Adds 180 degrees to the gyroscope
   public void allianceRelativeGyroscopeControl() {
-    gyro.setFusedHeading(getAngle() + 180);
+    gyro.setYaw(getAngle() + 180);
   }
 
 	// Returns the pose of the of the robot

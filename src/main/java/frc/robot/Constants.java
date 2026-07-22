@@ -26,24 +26,23 @@ public final class Constants {
 
   public static final class SwerveDriveConstants {
     public static final double MAX_SPEED = 5.0; // Meters per second
+    public static final double MAX_ANGULAR_SPEED = Math.toRadians(540.0); // Radians per second
   }
   
   public static final class SparkMaxIDs {
 		public static final int FRONT_LEFT_DRIVE = 1;
-    public static final int FRONT_RIGHT_DRIVE = 2;
-    public static final int BACK_LEFT_DRIVE = 3;
-    public static final int BACK_RIGHT_DRIVE = 4;
-    public static final int FRONT_LEFT_TURN = 5;
-    public static final int FRONT_RIGHT_TURN = 6;
-    public static final int BACK_LEFT_TURN = 7;
+    public static final int FRONT_RIGHT_DRIVE = 3;
+    public static final int BACK_LEFT_DRIVE = 5;
+    public static final int BACK_RIGHT_DRIVE = 7;
+    public static final int FRONT_LEFT_TURN = 2;
+    public static final int FRONT_RIGHT_TURN = 4;
+    public static final int BACK_LEFT_TURN = 6;
     public static final int BACK_RIGHT_TURN = 8;
     public static final int SHOOTER = 9;
     public static final int KICKER = 10;
     public static final int ROLLERS = 11;
     public static final int INTAKE_LIFT = 12;
     public static final int INTAKE_SPINNY = 13;
-    // public static final int LEFT_CLIMBER = 16; // Currently not on the robot
-    // public static final int RIGHT_CLIMBER = 17; // Currently not on the robot
   }
 
 	public static final class EncoderIDs {
@@ -54,15 +53,17 @@ public final class Constants {
   }
 
   public static final class EncoderOffsets {
-    public static final double FRONT_LEFT_ENCODER_OFFSET = 0;
-    public static final double FRONT_RIGHT_ENCODER_OFFSET = 0;
-    public static final double BACK_LEFT_ENCODER_OFFSET = 0;
-    public static final double BACK_RIGHT_ENCODER_OFFSET = 0;
+    public static final double FRONT_LEFT_ENCODER_OFFSET = 358.7;
+    public static final double FRONT_RIGHT_ENCODER_OFFSET = 27.9;
+    public static final double BACK_LEFT_ENCODER_OFFSET = 210.7;
+    public static final double BACK_RIGHT_ENCODER_OFFSET = 44.8;
   }
 
   public static final class SwerveConstants {
-    public static final double GEAR_RATIO = 0;
-    public static final double WHEEL_DIAMETER = 0; // In meters
+    public static final double GEAR_RATIO = 6.75;
+    public static final double WHEEL_DIAMETER = 0.1016; // 4 inches in meters
+		public static final double MODULE_OFFSET_FROM_CENTER = 0.2794; // 11 inches in meters
+		public static final double WHEEL_ZERO_TOLERANCE_DEGREES = 2.0;
   }
 
   public static final class ShooterConstants {

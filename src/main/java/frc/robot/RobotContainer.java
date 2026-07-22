@@ -20,6 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -86,14 +87,20 @@ public class RobotContainer {
 	private Command driveDefaultCommand() {
 		return new RunCommand(
 			() -> driveBase.drive(
-				-driverController.getLeftY(),
-				-driverController.getLeftX(),
-				driverController.getRightX(),
+				driverController.getLeftY(),
+				driverController.getLeftX(),
+				-driverController.getRightX(),
 				true,
 				driverController.rightTrigger().getAsBoolean()
 			),
 		driveBase
 		);
+	}
+
+	private boolean driverIsDriving() {
+		return Math.abs(driverController.getLeftY()) > Constants.OperatorConstants.DEADBAND
+			|| Math.abs(driverController.getLeftX()) > Constants.OperatorConstants.DEADBAND
+			|| Math.abs(driverController.getRightX()) > Constants.OperatorConstants.DEADBAND;
 	}
 
 	private void configureBindings() {
@@ -127,7 +134,7 @@ public class RobotContainer {
 		driverController.povRight().whileTrue(roller.jiggleRollerCommand()). whileFalse(roller.rollerCommand(driverController, copilotController)); //Jiggles the roller back and forth
 		////
 		*/
-
+		
 		//// Two Controller Set-Up
 		driverController.a().whileTrue(
 			new LockOnToHub(
@@ -162,6 +169,7 @@ public class RobotContainer {
     copilotController.povRight().whileTrue(roller.jiggleRollerCommand()).onFalse(roller.rollerOffCommand().andThen(roller.rollerCommand(driverController, copilotController))); // Jiggles the roller back and forth
 		////
 	}
+	
 
 	public final void configureAutoBuilder() {
 
@@ -230,8 +238,16 @@ public class RobotContainer {
 
 	// Match Start Protocol
 	public void matchStartProtocol(){
-		driveBase.zeroWheels();
     driveBase.resetEncoders();
     driveBase.getOdometry().resetPosition(new Rotation2d(), driveBase.modulePositions(), new Pose2d());
+
+		// Keeps straighting wheels until the modules are straight, 
+		// the driver asks to move, or the timeout expires.
+		Command straightenWheels = Commands.run(driveBase::zeroWheels, driveBase)
+			.until(() -> driveBase.wheelsAreZero() || driverIsDriving())
+			.withTimeout(1.5)
+			.finallyDo(driveBase::stopMotors);
+
+		CommandScheduler.getInstance().schedule(straightenWheels); // Runs straightenWheels
 	}
 }

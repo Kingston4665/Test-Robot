@@ -78,6 +78,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+    boolean autonomousRan = m_autonomousCommand != null;
+
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -99,7 +101,12 @@ public class Robot extends TimedRobot {
       System.out.println("Blue Alliance or no alliance detected: No gyro offset applied");
     }
 
-    m_robotContainer.matchStartProtocol(); // Runs the match start protocol
+    // Only straighten the wheels when Teleop actually follows an Autonomous period. 
+		// This avoids moving the modules when Teleop is enabled directly during testing.
+    if (autonomousRan) {
+      m_robotContainer.matchStartProtocol();
+    }
+    m_autonomousCommand = null;
   }
 
   /** This function is called periodically during operator control. */
