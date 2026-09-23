@@ -37,9 +37,7 @@ public class Kicker extends SubsystemBase {
 
   // This command runs the kicker
   public Command kickerOnCommand() {
-    return run(() -> {
-      kickerMax.set(KickerConstants.KICKER_SPEED);
-    });
+    return runEnd(this::kickerOn, this::kickerOff);
   }
 
   // This method runs the kicker in reverse
@@ -49,9 +47,7 @@ public class Kicker extends SubsystemBase {
 
   // This command runs the kicker in reverse
   public Command kickerReverseCommand() {
-    return run(() -> {
-      kickerMax.set(-KickerConstants.KICKER_SPEED);
-    });
+    return runEnd(this::kickerReverse, this::kickerOff);
   }
 
   // This method turns the kicker off
@@ -61,9 +57,7 @@ public class Kicker extends SubsystemBase {
 
   // This command turns the kicker off
   public Command kickerOffCommand() {
-    return run(() -> {
-      kickerMax.set(0);
-    });
+    return runOnce(this::kickerOff);
   }
 
   public Command kickerCommand(CommandXboxController driverController, CommandXboxController copilotController) {
@@ -73,7 +67,7 @@ public class Kicker extends SubsystemBase {
         kickerOff();
       }
       
-      if (driverController.rightBumper().getAsBoolean() || copilotController.rightBumper().getAsBoolean()) {
+      else if (driverController.rightBumper().getAsBoolean() || copilotController.rightBumper().getAsBoolean()) {
         kickerOn();
       }
 

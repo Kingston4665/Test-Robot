@@ -41,9 +41,7 @@ public class Intake extends SubsystemBase {
 
   // This command lowers the intake lift
   public Command intakeLiftDownCommand() {
-    return run(() -> {
-      intakeLiftMax.set(IntakeConstants.LIFT_SPEED);
-    });
+    return runEnd(this::intakeLiftDown, () -> intakeLiftMax.set(0));
   }
 
   // This method raises the intake lift
@@ -53,9 +51,7 @@ public class Intake extends SubsystemBase {
 
   // This command raises the intake lift
   public Command intakeLiftUpCommand() {
-    return run(() -> {
-      intakeLiftMax.set(-IntakeConstants.LIFT_SPEED);
-    });
+    return runEnd(this::intakeLiftUp, () -> intakeLiftMax.set(0));
   }
 
   // This method makes the intake go spinny
@@ -65,9 +61,7 @@ public class Intake extends SubsystemBase {
 
   // This command makes the intake go spinnyyyyyyyyyyyyyyyyyyyyyyyyyyyyy :)
   public Command intakeSpinnyCommand() {
-    return run(() -> {
-      intakeSpinnyMax.set(IntakeConstants.SPIN_SPEED);
-    });
+    return runEnd(this::intakeSpinny, this::intakeStopSpinny);
   }
 
   // This method makes the intake go reverse spinny
@@ -77,9 +71,7 @@ public class Intake extends SubsystemBase {
 
   // This command makes the intake go reverse spinny
   public Command intakeReverseCommand() {
-    return run(() -> {
-      intakeSpinnyMax.set(-IntakeConstants.SPIN_SPEED);
-    });
+    return runEnd(this::intakeReverseSpinny, this::intakeStopSpinny);
   }
 
   // This method makes the intake stop going spinny
@@ -89,19 +81,17 @@ public class Intake extends SubsystemBase {
 
   // This command makes the intake stop going spinny
   public Command intakeStopSpinnyCommand() {
-    return run(() -> {
-      intakeSpinnyMax.set(0);
-    });
+    return runOnce(this::intakeStopSpinny);
   }
 
   // Command that allows joystick control of the intake lift and runs intake in reverse when the intake moves upward
   public Command intakeCommand(CommandXboxController copilotController) {
     return run(() -> {
+      double liftInput = copilotController.getLeftY();
+      intakeLiftMax.set(Math.abs(liftInput) > OperatorConstants.DEADBAND
+          ? -liftInput * IntakeConstants.LIFT_SPEED : 0);
 
-      if (Math.abs(copilotController.getLeftY()) > OperatorConstants.DEADBAND) {
-        intakeLiftMax.set(-copilotController.getLeftY() * IntakeConstants.LIFT_SPEED);
-      } 
-      else if (copilotController.b().getAsBoolean()) {
+      if (copilotController.b().getAsBoolean()) {
        intakeStopSpinny();
       }
       else if (copilotController.x().getAsBoolean()) {
@@ -110,10 +100,6 @@ public class Intake extends SubsystemBase {
       else if (copilotController.y().getAsBoolean()) {
         intakeReverseSpinny();
       }
-      else {
-        intakeLiftMax.set(0);
-      }
-     
     });
   }
 
@@ -121,7 +107,6 @@ public class Intake extends SubsystemBase {
   // Command that allows joystick control of the intake lift and runs intake in reverse when the intake moves upward
   public Command oneControllerIntakeCommand(CommandXboxController driverController) {
     return run(() -> {
-
       if (driverController.leftTrigger().getAsBoolean()) {
         intakeLiftUp();
         // intakeReverseSpinny(); // May cause problems, comment out if needed
@@ -129,7 +114,11 @@ public class Intake extends SubsystemBase {
       else if (driverController.rightTrigger().getAsBoolean()) {
         intakeLiftDown();
       }
-      else if (driverController.b().getAsBoolean()) {
+      else {
+        intakeLiftMax.set(0);
+      }
+
+      if (driverController.b().getAsBoolean()) {
         intakeStopSpinny();
       }
       else if (driverController.x().getAsBoolean()) {
@@ -138,10 +127,6 @@ public class Intake extends SubsystemBase {
       else if (driverController.y().getAsBoolean()) {
         intakeReverseSpinny();
       }
-      else {
-        intakeLiftMax.set(0);
-      }
-    
     });
   }
 

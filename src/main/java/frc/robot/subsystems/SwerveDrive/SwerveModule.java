@@ -10,8 +10,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import frc.robot.Constants.SwerveConstants;
 import frc.robot.utils.AngleUtil;
-import frc.robot.utils.SpeedAnglePair;
-;
 
 public class SwerveModule {
 
@@ -20,8 +18,6 @@ public class SwerveModule {
 
   private final AnalogEncoder encoder;
   private final RelativeEncoder driveEncoder;
-
-  private boolean optimized;
 
   private double encoderOffset;
 
@@ -49,9 +45,8 @@ public class SwerveModule {
    * @param angle Desired angle
    */
   public void drive(double power, double angle) {
-    SpeedAnglePair powerAndAngle = optimize(power, angle);
-    drive.set(powerAndAngle.getX());
-    steerToAngle(powerAndAngle.getY());
+    drive.set(power);
+    steerToAngle(angle);
   }
 
   public void stopMotors() {
@@ -75,49 +70,18 @@ public class SwerveModule {
    * @param p     the p value to use
    */
   public void steerToAngle(double angle, double p) {
-
     double error = angle - getAngle();
-    if (error < -180) {
-      error += 360;
-    }
-    if (error > 180) {
-      error -= 360;
-    }
+    if (error < -180) error += 360;
+    if (error > 180) error -= 360;
 
-    error *= p;
-    error = clamp(error, -1, 1);
-    boolean errorNegative = error < 0;
-
-    if (Math.abs(error) >= 0.01)
-      error = Math.max(Math.abs(error / 3), 0.015) * (errorNegative ? -1 : 1);
-
-    if (Math.abs(error) > 0) {
-      turn.set(error);
-    } 
-    else {
+    // Stop small corrections so the wheel does not keep twitching.
+    if (Math.abs(error) <= 1.25) {
       turn.stopMotor();
+      return;
     }
-  }
-
-  /**
-   * Optimizes swerve module angles
-   * 
-   * @param power swerve power
-   * @param angle swerve angle
-   * @return A Vector2 containing the optimized angle and power
-   */
-  private SpeedAnglePair optimize(double power, double angle) {
-
-    // TODO: Fix optimization
-    // double delta = AngleUtil.circleMod(angle)-getAngle();
-    //
-    // if (Math.abs((delta)) > 90.0) {
-    // optimized = true;
-    // return new SpeedAnglePair(-power, AngleUtil.circleMod((angle + 180) % 360));
-    // }
-    //
-    // optimized = false;
-    return new SpeedAnglePair(power, AngleUtil.circleMod(angle));
+    double output = clamp(error * p / 3.0, -1.0 / 3.0, 1.0 / 3.0);
+    if (Math.abs(output) < 0.015) output = Math.copySign(0.015, output);
+    turn.set(output);
   }
 
   // thanks 2910, very cool
@@ -170,10 +134,6 @@ public class SwerveModule {
 
   public double getSpeed() {
     return drive.get();
-  }
-
-  public boolean isOptimized() {
-    return optimized;
   }
 
   public SwerveModulePosition getPosition() {

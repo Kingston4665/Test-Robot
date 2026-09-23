@@ -18,7 +18,7 @@ public final class Constants {
 
   public static final class OperatorConstants {
     public static final int DRIVER = 0; // KEEP ZEROOOOOOOOO!!!!!!!!
-    public static final int COPILOT = 1; // Keep One
+    public static final int COPILOT = 1; // Keep One!
     public static final double DEADBAND = 0.1;
     public static final DriverStation.Alliance RED_ALLIANCE = DriverStation.Alliance.Red;
     public static final DriverStation.Alliance BLUE_ALLIANCE = DriverStation.Alliance.Blue;

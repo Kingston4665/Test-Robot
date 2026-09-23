@@ -42,9 +42,7 @@ public class Shooter extends SubsystemBase {
 
   // This command makes the shooter go weeee
   public Command shooterOnCommand() {
-    return run(() -> {
-      shooterMax.set(ShooterConstants.SHOOTER_SPEED);
-    });
+    return runEnd(this::shooterOn, this::shooterOff);
   }
 
 
@@ -55,20 +53,17 @@ public class Shooter extends SubsystemBase {
 
   // This command turns the the shooter off
   public Command shooterOffCommand() {
-    return run(() -> {
-      shooterMax.set(0);
-    });
+    return runOnce(this::shooterOff);
   }
 
 // 
   public Command shooterCommand(CommandXboxController driverController, CommandXboxController copilotController) {
     return run(() -> {
-
       if (driverController.leftBumper().getAsBoolean() || copilotController.leftBumper().getAsBoolean()) {
         shooterOff();
       }
 
-      if (driverController.rightBumper().getAsBoolean() || copilotController.rightBumper().getAsBoolean()) {
+      else if (driverController.rightBumper().getAsBoolean() || copilotController.rightBumper().getAsBoolean()) {
         shooterOn();
       }
 

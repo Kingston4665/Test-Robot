@@ -50,17 +50,14 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
-
-  @Override
-  public void disabledPeriodic() {
-    LimelightHelpers.SetThrottle(LimelightConstants.LIME_LIGHT_NAME, 150); // Skips "throttle" number of frames every cycle on Limelight to reduce heat
+  public void disabledInit() {
+    LimelightHelpers.SetThrottle(LimelightConstants.LIME_LIGHT_NAME, 150);
   }
 
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
-    m_robotContainer.resetGyro(); // Resets the gyroscope for autonomous
+    LimelightHelpers.SetThrottle(LimelightConstants.LIME_LIGHT_NAME, 0);
 
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
@@ -70,14 +67,9 @@ public class Robot extends TimedRobot {
     }
   }
 
-  /** This function is called periodically during autonomous. */
-  @Override
-  public void autonomousPeriodic() {
-    LimelightHelpers.SetThrottle(LimelightConstants.LIME_LIGHT_NAME, 0); // Skips "throttle" number of frames every cycle on Limelight to reduce heat
-  }
-
   @Override
   public void teleopInit() {
+    LimelightHelpers.SetThrottle(LimelightConstants.LIME_LIGHT_NAME, 0);
     boolean autonomousRan = m_autonomousCommand != null;
 
     // This makes sure that the autonomous stops running when
@@ -107,14 +99,6 @@ public class Robot extends TimedRobot {
       m_robotContainer.matchStartProtocol();
     }
     m_autonomousCommand = null;
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {
-    //System.out.println("yello says the frog");
-
-    LimelightHelpers.SetThrottle(LimelightConstants.LIME_LIGHT_NAME, 0); // Skips "throttle" number of frames every cycle on Limelight to reduce heat
   }
 
   @Override

@@ -16,6 +16,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.auto.Autos;
 import frc.robot.commands.LockOnToHub;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.Kicker;
@@ -48,6 +50,7 @@ public class RobotContainer {
 	private final Kicker kicker = new Kicker();
 	private final Roller roller = new Roller();
 	private final LimelightSubsytem limelightSubsytem = new LimelightSubsytem();
+	private final Autos autos = new Autos(driveBase, intake, kicker, limelightSubsytem, roller, shooter);
 
 	// Creates the Xbox Controllers
 	private final CommandXboxController driverController = new CommandXboxController(Constants.OperatorConstants.DRIVER);
@@ -66,35 +69,57 @@ public class RobotContainer {
 		DriverStation.silenceJoystickConnectionWarning(true);
 
 		// AUTO COMMANDS
-    NamedCommands.registerCommand("Shoot First 8", (shooter.shooterOnCommand()).withTimeout(4));
-    NamedCommands.registerCommand("Kicker For Shooting", (kicker.kickerOnCommand()).withTimeout(4));
-    NamedCommands.registerCommand("Roller For Shooting", (roller.rollerOnCommand()).withTimeout(4));
-    //
-    NamedCommands.registerCommand("Reverse Kicker", (kicker.kickerReverseCommand()).withTimeout(.25));
-    //
-    NamedCommands.registerCommand("Shoot First 8 Forever", shooter.shooterOnCommand());
-    NamedCommands.registerCommand("Kicker Forever", kicker.kickerOnCommand());
-    NamedCommands.registerCommand("Roller Forever", roller.rollerOnCommand());
-    //
-    NamedCommands.registerCommand("Intake Fuel", intake.intakeLiftDownCommand().withTimeout(1)
+		NamedCommands.registerCommand("Shoot First 8", (shooter.shooterOnCommand()).withTimeout(4));
+		NamedCommands.registerCommand("Kicker For Shooting", (kicker.kickerOnCommand()).withTimeout(4));
+		NamedCommands.registerCommand("Roller For Shooting", (roller.rollerOnCommand()).withTimeout(4));
+		//
+		NamedCommands.registerCommand("Reverse Kicker", (kicker.kickerReverseCommand()).withTimeout(.25));
+		//
+		NamedCommands.registerCommand("Shoot First 8 Forever", shooter.shooterOnCommand());
+		NamedCommands.registerCommand("Kicker Forever", kicker.kickerOnCommand());
+		NamedCommands.registerCommand("Roller Forever", roller.rollerOnCommand());
+		//
+		NamedCommands.registerCommand("Intake Fuel", intake.intakeLiftDownCommand().withTimeout(1)
 			.andThen(intake.intakeSpinnyCommand()).withTimeout(4));
 
 		// Builds an auto chooser
 		autoChooser = AutoBuilder.buildAutoChooser();
+		autoChooser.addOption("Basic Auto (Java)", autos.basicAuto());
+		autoChooser.addOption("Depot Auto (Java)", autos.depotAuto());
+		// A slow, one-second check before trying a full PathPlanner auto.
+		autoChooser.addOption("Swerve +X check (0.25 m/s, 1 s)",
+			Commands.runEnd(
+				() -> driveBase.driveRobotRelative(new ChassisSpeeds(0.25, 0.0, 0.0)),
+				driveBase::stopMotors,
+				driveBase).withTimeout(1.0));
+
 		SmartDashboard.putData("Auto Chooser", autoChooser);
 	}
 
 	private Command driveDefaultCommand() {
 		return new RunCommand(
-			() -> driveBase.drive(
-				driverController.getLeftY(),
-				driverController.getLeftX(),
-				-driverController.getRightX(),
-				true,
-				driverController.rightTrigger().getAsBoolean()
-			),
+			() -> {
+				if (DriverStation.isTeleopEnabled()) {
+					driveBase.drive(
+						driverController.getLeftY(),
+						driverController.getLeftX(),
+						-driverController.getRightX(),
+						true,
+						driverController.rightTrigger().getAsBoolean()
+					);
+				} else {
+					driveBase.stopMotors();
+				}
+			},
 		driveBase
-		);
+		).finallyDo(driveBase::stopMotors);
+	}
+
+	private Command steerWheelsCommand(Runnable steeringAction) {
+		return Commands.run(() -> {
+			driveBase.stopMotors();
+			steeringAction.run();
+		}, driveBase).finallyDo(driveBase::stopMotors);
 	}
 
 	private boolean driverIsDriving() {
@@ -126,7 +151,7 @@ public class RobotContainer {
 		//
 		// shooter.setDefaultCommand(shooter.shooterCommand(driverController, copilotController)); // Controls the shooter
 		// kicker.setDefaultCommand(kicker.kickerCommand(driverController, copilotController)); // Controls the kicker
-    // roller.setDefaultCommand(roller.rollerCommand(driverController, copilotController)); // Controls the roller
+		// roller.setDefaultCommand(roller.rollerCommand(driverController, copilotController)); // Controls the roller
 		intake.setDefaultCommand(intake.oneControllerIntakeCommand(driverController)); // Controls the intake lift motion and the intake spinny
 		//
 		driverController.povUp().onTrue(roller.rollerOnCommand()).onFalse(roller.rollerCommand(driverController, copilotController)); // Turns the roller on
@@ -140,18 +165,18 @@ public class RobotContainer {
 			new LockOnToHub(
 				driveBase,
 				limelightSubsytem,
-				() -> -driverController.getLeftY(),
-				() -> -driverController.getLeftX(),
+				() -> driverController.getLeftY(),
+				() -> driverController.getLeftX(),
 				() -> driverController.rightTrigger().getAsBoolean()
 			)
 		); // Locks the robot onto the hub using the limelight
-		driverController.b().whileTrue(Commands.runOnce(driveBase::zeroWheels)); // Zeros the wheels
-		driverController.x().whileTrue(Commands.runOnce(driveBase::antiPushWheels)); // Puts the wheels in an X pattern to "lock" them
+		driverController.b().whileTrue(steerWheelsCommand(driveBase::zeroWheels)); // Zeros the wheels
+		driverController.x().whileTrue(steerWheelsCommand(driveBase::antiPushWheels)); // Holds the wheels in an X pattern
 		driverController.y().onTrue(Commands.runOnce(driveBase::zeroGyro)); // Zeros the gyro
 		// System.out.println("brad");
 		driverController.leftBumper().onTrue(kicker.kickerOffCommand()); // Turns the kicker off
 		driverController.rightBumper().onTrue(kicker.kickerReverseCommand().withTimeout(.25).andThen(kicker.kickerOnCommand())); // Turns the kicker on after running it in reverse for .5 seconds to clear it
-    driverController.rightBumper().whileTrue(Commands.runOnce(driveBase::antiPushWheels)); // Puts the wheels in an X pattern to "lock" them while shooting
+		driverController.rightBumper().whileTrue(steerWheelsCommand(driveBase::antiPushWheels)); // Holds an X pattern while shooting
 		//
 		shooter.setDefaultCommand(shooter.shooterCommand(driverController, copilotController)); // Controls the shooter
 		// kicker.setDefaultCommand(kicker.kickerCommand(driverController, copilotController)); // Controls the kicker
@@ -160,13 +185,13 @@ public class RobotContainer {
 		//
 		copilotController.leftBumper().onTrue(kicker.kickerOffCommand()); // Turns the kicker off
 		copilotController.rightBumper().onTrue(kicker.kickerReverseCommand().withTimeout(.25).andThen(kicker.kickerOnCommand())); // Turns the kicker on after running it in reverse for .5 seconds to clear it
-    copilotController.rightBumper().whileTrue(Commands.runOnce(driveBase::antiPushWheels)); // Puts the wheels in an X pattern to "lock" them while shooting
+		copilotController.rightBumper().whileTrue(steerWheelsCommand(driveBase::antiPushWheels)); // Holds an X pattern while shooting
 		//
 		intake.setDefaultCommand(intake.intakeCommand(copilotController)); // Controls the intake lift motion and the intake spinny
 		//
-		copilotController.povUp().onTrue(roller.rollerOnCommand()).onFalse(roller.rollerCommand(driverController, copilotController)); // Turns the roller on
-    copilotController.povLeft().onTrue(Commands.runOnce(driveBase::antiPushWheels)); // Puts the wheels in an X pattern and "locks" them
-    copilotController.povRight().whileTrue(roller.jiggleRollerCommand()).onFalse(roller.rollerOffCommand().andThen(roller.rollerCommand(driverController, copilotController))); // Jiggles the roller back and forth
+		copilotController.povUp().whileTrue(roller.rollerOnCommand()); // Turns the roller on while held
+		copilotController.povLeft().whileTrue(steerWheelsCommand(driveBase::antiPushWheels)); // Holds an X pattern
+		copilotController.povRight().whileTrue(roller.jiggleRollerCommand()); // Jiggles the roller back and forth while held
 		////
 	}
 	
@@ -174,16 +199,16 @@ public class RobotContainer {
 	public final void configureAutoBuilder() {
 
 		// Load the RobotConfig from the GUI settings 
-    RobotConfig config;
-    try {
-      config = RobotConfig.fromGUISettings();
-    } 
+		RobotConfig config;
+		try {
+			config = RobotConfig.fromGUISettings();
+		}
 		catch (IOException | ParseException e) {
-      DriverStation.reportError("Failed to load PathPlanner robot config", e.getStackTrace());
-  		return;
-    }
+			DriverStation.reportError("Failed to load PathPlanner robot config", e.getStackTrace());
+			return;
+		}
 
-    // Configure the AutoBuilder
+		// Configure the AutoBuilder
 		AutoBuilder.configure(
 				driveBase::getPose, // Robot pose supplier
 				driveBase::resetPose, // Method to reset odometry (will be called if your auto has a starting pose)
@@ -217,18 +242,13 @@ public class RobotContainer {
 	 * @return the command to run in autonomous
 	 */
 	public Command getAutonomousCommand() {
-
-		driveBase.zeroGyro();
-		driveBase.resetEncoders();
-		driveBase.getOdometry().resetPosition(new Rotation2d(), driveBase.modulePositions(), new Pose2d());
-
 		return autoChooser.getSelected();
 	}
 
 	// Resets the heading of the gyroscope
-  public void resetGyro() {
-    driveBase.zeroGyro();
-  }
+	public void resetGyro() {
+		driveBase.zeroGyro();
+	}
 
 	// Adds 180 degrees to the gyroscope if we are on red alliance to make the 
 	// gyroscope and controls correct so the driver doesn't have to do it manually 
@@ -242,7 +262,7 @@ public class RobotContainer {
     driveBase.getOdometry().resetPosition(new Rotation2d(), driveBase.modulePositions(), new Pose2d());
 
 		// Keeps straighting wheels until the modules are straight, 
-		// the driver asks to move, or the timeout expires.
+		// the driver asks to move, or the timeout expires
 		Command straightenWheels = Commands.run(driveBase::zeroWheels, driveBase)
 			.until(() -> driveBase.wheelsAreZero() || driverIsDriving())
 			.withTimeout(1.5)

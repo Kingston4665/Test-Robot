@@ -1,5 +1,6 @@
 package frc.robot.utils;
 
+import edu.wpi.first.math.MathUtil;
 import frc.robot.Constants.OperatorConstants;
 
 public class InputUtil {
@@ -10,11 +11,8 @@ public class InputUtil {
    * @return the deadbanded joystick value
    */
   public static double deadband(double value) {
-    if (Math.abs(value) <= OperatorConstants.DEADBAND) {
-      return 0d; // * 0d just returns 0 as a double *
-    } 
-    else {
-      return value;
-    }
+    // Rescale above the threshold so the first nonzero joystick value starts
+    // at zero instead of abruptly jumping to ten percent motor demand.
+    return MathUtil.applyDeadband(value, OperatorConstants.DEADBAND);
   }
 }

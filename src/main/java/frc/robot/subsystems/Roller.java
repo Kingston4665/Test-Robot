@@ -37,9 +37,7 @@ public class Roller extends SubsystemBase {
 
   // This command runs the roller
   public Command rollerOnCommand() {
-    return run(() -> {
-      rollerMax.set(RollerConstants.ROLLER_SPEED);
-    });
+    return runEnd(this::rollerOn, this::rollerOff);
   }
 
   // This method runs the roller in reverse
@@ -49,9 +47,7 @@ public class Roller extends SubsystemBase {
 
   // This command runs the roller in reverse
   public Command rollerReverseCommand() {
-    return run(() -> {
-      rollerMax.set(-RollerConstants.ROLLER_SPEED);
-    });
+    return runEnd(this::rollerReverse, this::rollerOff);
   }
 
   // This command runs the rollers forwards then backwards repeatedly to keep fuel moving
@@ -62,7 +58,7 @@ public class Roller extends SubsystemBase {
 
         runOnce(() -> rollerMax.set(RollerConstants.ROLLER_GIGGLE_SPEED)),
         new WaitCommand(0.5)
-    ).repeatedly();
+    ).repeatedly().finallyDo(this::rollerOff);
   }
 
   // This method stops the roller
@@ -72,19 +68,16 @@ public class Roller extends SubsystemBase {
 
   // This command stops the roller
   public Command rollerOffCommand() {
-    return run(() -> {
-      rollerMax.set(0);
-    });
+    return runOnce(this::rollerOff);
   }
 
   public Command rollerCommand(CommandXboxController driverController, CommandXboxController copilotController) {
     return run(() -> {
-
       if (driverController.leftBumper().getAsBoolean() || copilotController.leftBumper().getAsBoolean()) {
         rollerOff();
       }
 
-      if (driverController.rightBumper().getAsBoolean() || copilotController.rightBumper().getAsBoolean()) {
+      else if (driverController.rightBumper().getAsBoolean() || copilotController.rightBumper().getAsBoolean()) {
         rollerOn();
       }
 

@@ -10,6 +10,7 @@ import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.path.PathPlannerPath;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.commands.AngleToHub;
@@ -64,38 +65,43 @@ public class Autos {
 	// Autos
 	public Command basicAuto() {
 		Optional<PathPlannerPath> backUp = PathPlannerUtils.loadPathByName("First 8 Path");
+		Optional<Pose2d> startingPose = backUp.flatMap(PathPlannerPath::getStartingHolonomicPose);
 
-		PathPlannerAuto auto;
+		if (backUp.isEmpty() || startingPose.isEmpty()) {
+			return Commands.none();
+		}
 
-		var cmd = backUp.isEmpty() ? Commands.none() : Commands.sequence(
+		Command cmd = Commands.sequence(
+			AutoBuilder.resetOdom(startingPose.get()),
 			followPath(backUp),
 			shoot().withTimeout(4)
 		);
 
-		auto = new PathPlannerAuto(cmd);
-		return auto;
+		return new PathPlannerAuto(cmd, startingPose.get());
 	}
 
 	public Command depotAuto() {
 		Optional<PathPlannerPath> backUp = PathPlannerUtils.loadPathByName("First 8 Path");
 		Optional<PathPlannerPath> toDepot = PathPlannerUtils.loadPathByName("Center To Depot");
 		Optional<PathPlannerPath> backToHub = PathPlannerUtils.loadPathByName("Depot Back To Center");
+		Optional<Pose2d> startingPose = backUp.flatMap(PathPlannerPath::getStartingHolonomicPose);
 
+		if (backUp.isEmpty() || toDepot.isEmpty() || backToHub.isEmpty() || startingPose.isEmpty()) {
+			return Commands.none();
+		}
 
-		PathPlannerAuto auto;
-
-		var cmd = backUp.isEmpty() || toDepot.isEmpty() || backToHub.isEmpty()
-			? Commands.none() : Commands.sequence(
-					followPath(backUp),
-					shoot().withTimeout(4),
-					followPath(toDepot),
-					intake().withTimeout(4),
-					followPath(backToHub),
-					new AngleToHub(swerveSubsystem, limelightSubsytem).withTimeout(1),
-					shoot().withTimeout(6)
+		Pose2d expectedStart = startingPose.get();
+		Command cmd = Commands.sequence(
+			AutoBuilder.resetOdom(expectedStart),
+			followPath(backUp),
+			shoot().withTimeout(4),
+			followPath(toDepot),
+			intake().withTimeout(4),
+			followPath(backToHub),
+			new AngleToHub(swerveSubsystem, limelightSubsytem).withTimeout(1),
+			shoot().withTimeout(6)
 		);
 
-		auto = new PathPlannerAuto(cmd);
-		return auto;
+		return new PathPlannerAuto(cmd, startingPose.get());
 	}
 }

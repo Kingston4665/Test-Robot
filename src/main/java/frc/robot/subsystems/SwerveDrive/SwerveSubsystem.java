@@ -6,6 +6,7 @@ package frc.robot.subsystems.SwerveDrive;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -21,6 +22,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.EncoderIDs;
@@ -30,8 +32,6 @@ import frc.robot.Constants.SwerveConstants;
 import frc.robot.Constants.SwerveDriveConstants;
 import frc.robot.utils.AngleUtil;
 import frc.robot.utils.InputUtil;
-import swervelib.telemetry.SwerveDriveTelemetry;
-import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 
 public class SwerveSubsystem extends SubsystemBase {
 
@@ -73,19 +73,26 @@ public class SwerveSubsystem extends SubsystemBase {
   // Kinematics & Odometry
   private final SwerveDriveKinematics kinematics;
   private final SwerveDriveOdometry odometry;
+  private boolean motorConfigurationValid = true;
 
   /** Creates a new SwerveSubsytem. */
   public SwerveSubsystem() {
 
+    // SwerveModule does the wheel conversion itself, so use raw motor rotations and RPM.
+    SparkMaxConfig driveEncoderConfig = new SparkMaxConfig();
+    driveEncoderConfig.encoder.positionConversionFactor(1.0).velocityConversionFactor(1.0);
+    checkConfiguration("FL drive", frontLeftDrive.configure(driveEncoderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
+    checkConfiguration("FR drive", frontRightDrive.configure(driveEncoderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
+    checkConfiguration("BL drive", backLeftDrive.configure(driveEncoderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
+    checkConfiguration("BR drive", backRightDrive.configure(driveEncoderConfig, ResetMode.kNoResetSafeParameters, PersistMode.kPersistParameters));
+
     // The working 2026 module configuration inverts every angle motor.
     SparkMaxConfig turnMotorConfig = new SparkMaxConfig();
     turnMotorConfig.inverted(true);
-    frontLeftTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    frontRightTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    backLeftTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    backRightTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH; // TODO LOWER THIS AT COMP, SLOWS COMPUTATION
+    checkConfiguration("FL turn", frontLeftTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    checkConfiguration("FR turn", frontRightTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    checkConfiguration("BL turn", backLeftTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    checkConfiguration("BR turn", backRightTurn.configure(turnMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
     kinematics = new SwerveDriveKinematics(
 			new Translation2d(SwerveConstants.MODULE_OFFSET_FROM_CENTER, SwerveConstants.MODULE_OFFSET_FROM_CENTER),
@@ -134,63 +141,51 @@ public class SwerveSubsystem extends SubsystemBase {
       return;
     }
 		
-		// Makes the robot control field relative
-		if (field == true) {
-    double gyroRads = Math.toRadians(-gyro.getYaw().getValueAsDouble());
-    double temp = forward * Math.cos(gyroRads) + strafe * Math.sin(gyroRads);
-    strafe = -forward * Math.sin(gyroRads) + strafe * Math.cos(gyroRads);
-    forward = temp;
+		// The joystick turn direction is opposite WPILib's positive rotation.
+		ChassisSpeeds speeds = new ChassisSpeeds(forward, strafe, -dturn);
+		if (field) {
+			speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, Rotation2d.fromDegrees(getAngle()));
 		}
-
-		// "dturn" is negative because the joystick positive direction and WPILib-positive rotation direction are opposite
-    SwerveModuleState[] states = kinematics.toSwerveModuleStates(new ChassisSpeeds(forward, strafe, -dturn));
+		SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds);
     setModuleStates(states);
 
-		// Puts important information on the SmartDashboard for debugging and tuning purposes
-    SmartDashboard.putNumber("Front Left Desired Angle", AngleUtil.circleMod(states[0].angle.getDegrees()));
-    SmartDashboard.putNumber("Front Right Desired Angle", AngleUtil.circleMod(states[1].angle.getDegrees()));
-    SmartDashboard.putNumber("Backleft Desired Angle", AngleUtil.circleMod(states[2].angle.getDegrees()));
-    SmartDashboard.putNumber("Backright Desired Angle", AngleUtil.circleMod(states[3].angle.getDegrees()));
+  }
 
-    SmartDashboard.putNumber("Front Left Power", states[0].speedMetersPerSecond);
-    SmartDashboard.putNumber("Front Right Power", states[1].speedMetersPerSecond);
-    SmartDashboard.putNumber("Back Left Power", states[2].speedMetersPerSecond);
-    SmartDashboard.putNumber("Back Right Power", states[3].speedMetersPerSecond);
-
-    SmartDashboard.putNumber("Front Left Angle", frontLeft.getAngle());
-    SmartDashboard.putNumber("Front Right Angle", frontRight.getAngle());
-    SmartDashboard.putNumber("Back Left Angle", backLeft.getAngle());
-    SmartDashboard.putNumber("Back Right Angle", backRight.getAngle());
-
-    SmartDashboard.putNumber("Front Left Speed", frontLeft.getSpeed());
-    SmartDashboard.putNumber("Front Right Speed", frontRight.getSpeed());
-    SmartDashboard.putNumber("Back Left Speed", backLeft.getSpeed());
-    SmartDashboard.putNumber("Back Right Speed", backRight.getSpeed());
-
-    SmartDashboard.putBoolean("Front Left Optimized?", frontLeft.isOptimized());
-    SmartDashboard.putBoolean("Front Right Optimized?", frontRight.isOptimized());
-    SmartDashboard.putBoolean("Back Left Optimized?", backLeft.isOptimized());
-    SmartDashboard.putBoolean("Back Right Optimized?", backRight.isOptimized());
-
-    SmartDashboard.putNumber("Pose X", odometry.getPoseMeters().getTranslation().getX());
-    SmartDashboard.putNumber("Pose Y", odometry.getPoseMeters().getTranslation().getY());
-    SmartDashboard.putNumber("Pose Degrees", getAngle());
+  private void checkConfiguration(String motorName, REVLibError result) {
+    if (result != REVLibError.kOk) {
+      motorConfigurationValid = false;
+      DriverStation.reportError("Swerve " + motorName + " configuration failed: " + result, false);
+    }
   }
 
   public void setModuleStates(SwerveModuleState[] states) {
+    if (!motorConfigurationValid) {
+      stopMotors();
+      return;
+    }
     SwerveDriveKinematics.desaturateWheelSpeeds(states, SwerveDriveConstants.MAX_SPEED);
 
 		// Optimizes the module states to prevent unnecessary rotation
-    states[0] = optimize(states[0], Rotation2d.fromDegrees(frontLeft.getAngle()));
-    states[1] = optimize(states[1], Rotation2d.fromDegrees(frontRight.getAngle()));
-    states[2] = optimize(states[2], Rotation2d.fromDegrees(backLeft.getAngle()));
-    states[3] = optimize(states[3], Rotation2d.fromDegrees(backRight.getAngle()));
+    states[0] = optimizeAndScale(states[0], Rotation2d.fromDegrees(frontLeft.getAngle()));
+    states[1] = optimizeAndScale(states[1], Rotation2d.fromDegrees(frontRight.getAngle()));
+    states[2] = optimizeAndScale(states[2], Rotation2d.fromDegrees(backLeft.getAngle()));
+    states[3] = optimizeAndScale(states[3], Rotation2d.fromDegrees(backRight.getAngle()));
 
 		// Drives the modules by giving them the desired speed and angle
     frontLeft.drive(states[0].speedMetersPerSecond / SwerveDriveConstants.MAX_SPEED, states[0].angle.getDegrees());
     frontRight.drive(states[1].speedMetersPerSecond / SwerveDriveConstants.MAX_SPEED, states[1].angle.getDegrees());
     backLeft.drive(states[2].speedMetersPerSecond / SwerveDriveConstants.MAX_SPEED, states[2].angle.getDegrees());
     backRight.drive(states[3].speedMetersPerSecond / SwerveDriveConstants.MAX_SPEED, states[3].angle.getDegrees());
+
+    // The same command telemetry is available in teleop and autonomous.
+    SmartDashboard.putNumber("FL Commanded mps", states[0].speedMetersPerSecond);
+    SmartDashboard.putNumber("FR Commanded mps", states[1].speedMetersPerSecond);
+    SmartDashboard.putNumber("BL Commanded mps", states[2].speedMetersPerSecond);
+    SmartDashboard.putNumber("BR Commanded mps", states[3].speedMetersPerSecond);
+    SmartDashboard.putNumber("FL Target Angle", AngleUtil.circleMod(states[0].angle.getDegrees()));
+    SmartDashboard.putNumber("FR Target Angle", AngleUtil.circleMod(states[1].angle.getDegrees()));
+    SmartDashboard.putNumber("BL Target Angle", AngleUtil.circleMod(states[2].angle.getDegrees()));
+    SmartDashboard.putNumber("BR Target Angle", AngleUtil.circleMod(states[3].angle.getDegrees()));
   }
 
   public void stopMotors() {
@@ -198,6 +193,10 @@ public class SwerveSubsystem extends SubsystemBase {
     frontRight.stopMotors();
     backLeft.stopMotors();
     backRight.stopMotors();
+    SmartDashboard.putNumber("FL Commanded mps", 0.0);
+    SmartDashboard.putNumber("FR Commanded mps", 0.0);
+    SmartDashboard.putNumber("BL Commanded mps", 0.0);
+    SmartDashboard.putNumber("BR Commanded mps", 0.0);
   }
 
   public void zeroWheels() {
@@ -272,6 +271,22 @@ public class SwerveSubsystem extends SubsystemBase {
     }
   }
 
+  private static SwerveModuleState optimizeAndScale(
+      SwerveModuleState desiredState, Rotation2d currentAngle) {
+    // A zero-speed command has no meaningful angle; keep the wheels where they
+    // are instead of turning all four to zero at the end of every path.
+    if (Math.abs(desiredState.speedMetersPerSecond) < 0.01) {
+      return new SwerveModuleState(0.0, currentAngle);
+    }
+
+    SwerveModuleState optimized = optimize(desiredState, currentAngle);
+    // Do not drive sideways while a module is still steering toward its target.
+    double angleError = optimized.angle.minus(currentAngle).getRadians();
+    return new SwerveModuleState(
+        optimized.speedMetersPerSecond * Math.max(0.0, Math.cos(angleError)),
+        optimized.angle);
+  }
+
 	// Adds 180 degrees to the gyroscope
   public void allianceRelativeGyroscopeControl() {
     gyro.setYaw(getAngle() + 180);
@@ -305,6 +320,22 @@ public class SwerveSubsystem extends SubsystemBase {
 
 		// Updates the odometry
     odometry.update(Rotation2d.fromDegrees(getAngle()), modulePositions());
+
+    // Publish the measured values in auto too. Compare each measured speed and
+    // angle with its command; optimization can intentionally reverse a wheel.
+    // The robot-relative +X check should still increase pose X at zero heading.
+    SmartDashboard.putNumber("Pose X", getPose().getX());
+    SmartDashboard.putNumber("Pose Y", getPose().getY());
+    SmartDashboard.putNumber("Pose Degrees", getPose().getRotation().getDegrees());
+    SmartDashboard.putNumber("Gyro Yaw", getAngle());
+    SmartDashboard.putNumber("FL Measured mps", frontLeft.getState().speedMetersPerSecond);
+    SmartDashboard.putNumber("FR Measured mps", frontRight.getState().speedMetersPerSecond);
+    SmartDashboard.putNumber("BL Measured mps", backLeft.getState().speedMetersPerSecond);
+    SmartDashboard.putNumber("BR Measured mps", backRight.getState().speedMetersPerSecond);
+    SmartDashboard.putNumber("FL Measured Angle", frontLeft.getAngle());
+    SmartDashboard.putNumber("FR Measured Angle", frontRight.getAngle());
+    SmartDashboard.putNumber("BL Measured Angle", backLeft.getAngle());
+    SmartDashboard.putNumber("BR Measured Angle", backRight.getAngle());
   }
 
   @Override
