@@ -104,4 +104,27 @@ public class Autos {
 
 		return new PathPlannerAuto(cmd, startingPose.get());
 	}
+
+	public Command thorAuto() {
+		Optional<PathPlannerPath> backUp = PathPlannerUtils.loadPathByName("First 8 Path");
+		Optional<PathPlannerPath> toNeutral = PathPlannerUtils.loadPathByName("Neutral path");
+		Optional<PathPlannerPath> backToStart = PathPlannerUtils.loadPathByName("Shoot Second Hopper");
+		Optional<Pose2d> startingPose = backUp.flatMap(PathPlannerPath:: getStartingHolonomicPose);
+		if(backUp.isEmpty() || toNeutral.isEmpty() || backToStart.isEmpty() || startingPose.isEmpty()){
+			return Commands.none();
+		}
+
+		Pose2d expectedStart = startingPose.get();
+		Command cmd = Commands.sequence(
+		followPath(backUp),
+		shoot().withTimeout(4),
+		followPath(toNeutral),
+		intake().withTimeout(5),
+		followPath(backToStart),
+		new AngleToHub(swerveSubsystem, limelightSubsytem).withTimeout(1),
+		shoot().withTimeout(4)
+		);
+
+		return new PathPlannerAuto(cmd,startingPose.get());
+	}
 }

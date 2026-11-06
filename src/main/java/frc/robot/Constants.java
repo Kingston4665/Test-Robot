@@ -53,10 +53,10 @@ public final class Constants {
   }
 
   public static final class EncoderOffsets {
-    public static final double FRONT_LEFT_ENCODER_OFFSET = 358.7;
-    public static final double FRONT_RIGHT_ENCODER_OFFSET = 27.9;
-    public static final double BACK_LEFT_ENCODER_OFFSET = 210.7;
-    public static final double BACK_RIGHT_ENCODER_OFFSET = 44.8;
+    public static final double FRONT_LEFT_ENCODER_OFFSET = 357.7;
+    public static final double FRONT_RIGHT_ENCODER_OFFSET = 81.3;
+    public static final double BACK_LEFT_ENCODER_OFFSET = 207.2;
+    public static final double BACK_RIGHT_ENCODER_OFFSET = 227.8;
   }
 
   public static final class SwerveConstants {
